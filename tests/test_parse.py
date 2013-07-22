@@ -14,6 +14,15 @@ class TestParse(unittest.TestCase):
     result = sqlhash.execute(query)
     self.assertEquals([{'a_column' : '1'}], result)
 
+  def test_select_one_row_two_columns(self):
+    sqlhash.set_state({'a_table' : [{'a_column' : '1',
+                                     'b_column' : '2',
+                                     'c_column' : '3'}]})
+    query = "SELECT a_column, b_column FROM a_table"
+    result = sqlhash.execute(query)
+    self.assertEquals([{'a_column' : '1',
+                        'b_column' : '2'}], result)
+
   def test_select_with_where(self):
     sqlhash.set_state({'a_table' : [{'a_column' : '1'},
                                     {'a_column' : '2'}]})

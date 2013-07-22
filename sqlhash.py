@@ -12,7 +12,14 @@ def execute(query):
   if token_types[0] == "Token.Keyword.DML":
     if tokens[0].value.lower() == "select":
       select_query = SelectQuery()
-      select_query.to_project = [tokens[1].value]
+
+      if str(tokens[1].ttype) == 'Token.Wildcard':
+        select_query.to_project = '*'
+      elif tokens[1].__class__.__name__ == 'IdentifierList': 
+        select_query.to_project = [identifier.value for identifier in tokens[1].get_sublists()]
+      else:
+        select_query.to_project = [tokens[1].value]
+
       select_query.source = tokens[3].value
       select_query.conditions = []
       where = [x for x in tokens if x.__class__.__name__ == "Where"]
@@ -20,6 +27,7 @@ def execute(query):
         select_query.conditions = []
         for condition in list(where[0].get_sublists()):
           select_query.conditions.append([x for x in condition.flatten() if not x.is_whitespace()])
+
       rows = state[select_query.source]
       selected_rows = []
       for row in rows:
@@ -32,9 +40,12 @@ def execute(query):
           selected_rows.append(row)
 
       projected_rows = [] 
-      for row in selected_rows:
-        projected_row = dict((column_name, row[column_name]) for column_name in select_query.to_project)
-        projected_rows.append(projected_row)
+      if select_query.to_project == '*':
+        projected_rows = selected_rows
+      else:
+        for row in selected_rows:
+          projected_row = dict((column_name, row[column_name]) for column_name in select_query.to_project)
+          projected_rows.append(projected_row)
 
       return projected_rows
 
